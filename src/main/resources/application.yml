@@ -1,0 +1,14 @@
+app:
+    name: task
+
+server:
+    port: 8080
+
+cxf:
+    path: /
+    servlet.init:
+        service-list-path: /info
+
+
+
+

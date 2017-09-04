@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="MAIN" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <param name="target" value="System.out"/>
+    </appender>
+
+    <logger name="org.jooq.Constants" level="OFF"/>
+
+    <logger name="ru.bsa" level="DEBUG" additivity="false">
+        <appender-ref ref="MAIN"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="MAIN"/>
+    </root>
+</configuration>

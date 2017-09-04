@@ -9,10 +9,7 @@
         </encoder>
         <param name="target" value="System.out"/>
     </appender>
-
-    <logger name="org.jooq.Constants" level="OFF"/>
-
-    <logger name="ru.bsa" level="DEBUG" additivity="false">
+    <logger name="ru.bobkov.infobip" level="DEBUG" additivity="false">
         <appender-ref ref="MAIN"/>
     </logger>
 

@@ -1,10 +1,26 @@
 package ru.bobkov.infobip.rest.dto;
 
+
+import io.swagger.annotations.ApiModelProperty;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+
+
 public class FileUpload {
 
+    @JsonProperty
     private String id;
+
+    @JsonProperty
     private long size;
+
+    @JsonProperty
     private long uploaded = 0;
+
+
+    @JsonIgnore
+    @ApiModelProperty(hidden = true)
+    private long time = 0;
 
 
     public FileUpload(final String id, final long size) {
@@ -26,6 +42,16 @@ public class FileUpload {
 
     public long getSize() {
         return size;
+    }
+
+    @JsonIgnore
+    public long getTime() {
+        return time;
+    }
+
+    @JsonIgnore
+    public void setTime(long time) {
+        this.time = time;
     }
 
     @Override
@@ -54,17 +80,20 @@ public class FileUpload {
 
     @Override
     public String toString() {
-        return "FileUpload{"
-                + "id='" + id + '\''
-                + ", size=" + size
-                + ", uploaded=" + uploaded
-                + '}';
+        return "FileUpload{" +
+                "id='" + id + '\'' +
+                ", size=" + size +
+                ", uploaded=" + uploaded +
+                ", time=" + time +
+                '}';
     }
-
 
     public FileUpload copy() {
         FileUpload fl = new FileUpload(id, size);
         fl.setUploaded(uploaded);
+        fl.setTime(time);
         return fl;
     }
+
+
 }

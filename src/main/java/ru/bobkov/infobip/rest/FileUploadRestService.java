@@ -11,7 +11,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 
 @Api("File upload rest service api")
@@ -21,13 +20,10 @@ public interface FileUploadRestService {
     @POST
     @Path("/v1/upload")
     @Consumes(MediaType.WILDCARD)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.WILDCARD)
     @ApiOperation(
             value = "Upload file to system"
     )
-//    @ApiResponses({
-//            @ApiResponse(code = 404, message = "Application not found for contact with target id or contact with target id not found")
-//    })
     Response fileUpload(@Context HttpServletRequest request,
                         @ApiParam(value = "Header 'X-Upload-File' with file name", required = true) @HeaderParam("X-Upload-File") String fileName,
                         @ApiParam(value = "Header 'Content-Length'", required = true) @HeaderParam(HttpHeaders.CONTENT_LENGTH) Long contentLength
@@ -40,9 +36,6 @@ public interface FileUploadRestService {
     @ApiOperation(
             value = "Getting current in-progress 'bytes uploaded' information"
     )
-//    @ApiResponses({
-//            @ApiResponse(code = 404, message = "Application not found for contact with target id or contact with target id not found")
-//    })
     FileUploadResponse getCurrentUploadsStatus();
 
 
@@ -52,9 +45,6 @@ public interface FileUploadRestService {
     @ApiOperation(
             value = "getting transfer duration metrics for all finished uploads"
     )
-//    @ApiResponses({
-//            @ApiResponse(code = 404, message = "Application not found for contact with target id or contact with target id not found")
-//    })
     String getFinishedUploadsDurationMetrics();
 
 

@@ -1,27 +1,19 @@
 package ru.bobkov.infobip.rest;
 
 
-import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 
@@ -36,58 +28,73 @@ public class FileUploadRestServiceIT {
     private int port;
 
 
-
-
-
     @Test
-    public void getLastJson() throws Exception {
+    public void testUploadParallel() throws Exception {
+        ExecutorService executorService = null;
+        CloseableHttpClient client = null;
 
-        int parralelRequestCount=100;
+        try {
+            final int parallelRequestCount = 100;
 
-        ExecutorService executorService= Executors.newFixedThreadPool(parralelRequestCount);
+            executorService = Executors.newFixedThreadPool(parallelRequestCount);
+
+            final int contentLength = 1024 * 1024 * 50;
+            final byte[] file = new byte[contentLength];
+
+            final Random random = new Random(System.currentTimeMillis());
+
+            final CompletionService<Integer> ecs = new ExecutorCompletionService<Integer>(executorService);
+
+            final CyclicBarrier barrier = new CyclicBarrier(parallelRequestCount);
+
+            //CloseableHttpClient client = HttpClients.createDefault();
 
 
+            final PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+            cm.setMaxTotal(parallelRequestCount);
+            cm.setDefaultMaxPerRoute(parallelRequestCount);
 
-        int contentLength = 1024 * 1024 * 50;
-        byte[] b = new byte[contentLength];
+            client = HttpClients.custom()
+                    .setConnectionManager(cm)
+                    .build();
 
 
-        Random random = new Random(System.currentTimeMillis());
+            for (int i = 0; i < parallelRequestCount; i++) {
 
-        CompletionService<Integer> ecs = new ExecutorCompletionService<Integer>(executorService);
+                CloseableHttpClient finalClient = client;
+                Callable<Integer> callable = () -> {
 
-        CyclicBarrier barrier = new CyclicBarrier(parralelRequestCount);
 
-        for(int i=0; i<parralelRequestCount; i++) {
+                    HttpPost httpPost = new HttpPost("http://localhost:" + port + "/api/v1/upload/");
 
-            Callable<Integer> callable = () -> {
+                    httpPost.setEntity(new ByteArrayEntity(file));
+                    httpPost.addHeader("X-Upload-File", "test" + random.nextInt(10000) + ".zip");
 
-                CloseableHttpClient client = HttpClients.createDefault();
-                HttpPost httpPost = new HttpPost("http://localhost:" + port + "/api/v1/upload/");
 
-                httpPost.setEntity(new ByteArrayEntity(b));
-                httpPost.addHeader("X-Upload-File", "test"+random.nextInt(10000)+".zip");
+                    barrier.await();
 
-                System.out.println("client wait");
-                barrier.await();
+                    CloseableHttpResponse response = finalClient.execute(httpPost);
+                    return response.getStatusLine().getStatusCode();
 
-                System.out.println("make post request");
-                CloseableHttpResponse response = client.execute(httpPost);
+                };
+
+                ecs.submit(callable);
+            }
+
+
+            for (int i = 0; i < parallelRequestCount; i++) {
+                Integer r = ecs.take().get(1L, TimeUnit.MINUTES);
+                assertThat(r).isEqualTo(Response.Status.OK.getStatusCode());
+            }
+
+        } finally {
+            if (executorService != null) {
+                executorService.shutdown();
+            }
+
+            if (client != null) {
                 client.close();
-
-                return response.getStatusLine().getStatusCode();
-
-            };
-
-            ecs.submit(callable);
-        }
-
-
-        for (int i = 0; i < parralelRequestCount; i++) {
-            System.out.println("try to wait");
-            Integer r = ecs.take().get(1L, TimeUnit.MINUTES);
-            assertThat(r).isEqualTo(Response.Status.OK.getStatusCode());
-
+            }
         }
 
     }
